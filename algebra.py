@@ -39,7 +39,7 @@ class FElt:
         return self.value == other.value
     
     def __str__(self):
-        return str(self.value) + " (mod " + str(self.field.order) + ")"
+        return str(self.value)
 
 class GF:
     def __init__(self, order):

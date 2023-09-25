@@ -1,33 +1,16 @@
-from algebra import GF
-from baby_jubjub import SWPoint
+from baby_jubjub import SWPoint, MontPoint, TwEdPoint
 
 # Verifies different forms of the Baby Jubjub curve are equivalent
 # Reference: https://www-fourier.univ-grenoble-alpes.fr/mphell/doc-v5/conversion_weierstrass_edwards.html
 def main():
-    # Base field
-    p=21888242871839275222246405745257275088548364400416034343698204186575808495617
-    Fr=GF(p)
-
-    # Short Weierstrass parameters
-    SWa=Fr(7296080957279758407415468581752425029516121466805344781232734728849116493472)
-    SWb=Fr(16213513238399463127589930181672055621146936592900766180517188641980520820846)
-
-    # Twisted Edwards parameters
-    TwEdA = Fr(168700)
-    TwEdd = Fr(168696)
-
-    # Montgomery parameters
-    MontA = Fr(168698)
-    MontB = Fr(1)
-    alpha = MontA / Fr(3)
-    beta = Fr(1) / MontB
-
-    # Test some conversions
-    SwGx = 14414009007687342025526645003307639786191886886413750648631138442071909631647
-    SwGy = 14577268218881899420966779687690205425227431577728659819975198491127179315626
-    for i in range(1000):
-        SwG = SWPoint(SwGx, SwGy).scalar_mul(i)
-        print(i)
+    # Test some operations using Short Weierstrass Generator point
+    scalar = 1023
+    random_multiple = 1234567890
+    num_points_to_test = 100
+    for i in range(0, SWPoint.order, SWPoint.order // num_points_to_test):
+        print(f"Verifying conversions for {i}G")
+        # Generate a point on the curve
+        SwG = SWPoint.generator().scalar_mul(i)
         assert(SwG.is_on_curve())
 
         # Convert from Short Weierstrass to Montgomery
@@ -42,24 +25,42 @@ def main():
         MontGPrime = TwEdG.to_montgomery()
         assert(MontGPrime.is_on_curve())
         assert(MontG == MontGPrime)
-        
-        # Operations in Twisted Edwards form
-        TwEdGScaled = TwEdG.scalar_mul(11)
-        assert(TwEdGScaled.is_on_curve())
-        MontGScaled = MontG.scalar_mul(11)
-        assert(MontGScaled.is_on_curve())
-        assert(TwEdGScaled.to_montgomery() == MontGScaled)
 
         # Convert from Montgomery to Short Weierstrass
-        # try:
-        #     SwGPrime = MontGPrime.to_short_weierstrass()
-        #     assert(SwGPrime.is_on_curve())
-        #     assert(SwG == SwGPrime)
-        #     # print("NO ERROR")
-        # except:
-        #     # print("error")
-        #     pass
-    
+        SwGPrime = MontGPrime.to_short_weierstrass()
+        assert(SwGPrime.is_on_curve())
+        assert(SwG == SwGPrime)
+
+        # Compare addition in different forms
+        SwP = SWPoint.generator().scalar_mul(random_multiple)
+        assert(SwP.is_on_curve())
+        assert((SwP + SwG).to_montgomery() == SwG.to_montgomery() + SwP.to_montgomery())
+        assert((SwP + SwG).to_montgomery().to_twisted_edwards() == SwG.to_montgomery().to_twisted_edwards() + SwP.to_montgomery().to_twisted_edwards())
+
+        MontP = MontPoint.generator().scalar_mul(random_multiple)
+        assert(MontP.is_on_curve())
+        assert((MontP + MontG).to_short_weierstrass() == MontG.to_short_weierstrass() + MontP.to_short_weierstrass())
+        assert((MontP + MontG).to_twisted_edwards() == MontG.to_twisted_edwards() + MontP.to_twisted_edwards())
+
+        TwEdP = TwEdPoint.generator().scalar_mul(random_multiple)
+        assert(TwEdP.is_on_curve())
+        assert((TwEdP + TwEdG).to_montgomery() == TwEdG.to_montgomery() + TwEdP.to_montgomery())
+        assert((TwEdP + TwEdG).to_montgomery().to_short_weierstrass() == TwEdG.to_montgomery().to_short_weierstrass() + TwEdP.to_montgomery().to_short_weierstrass())
+        
+        # Compare scaling in different forms
+        TwEdGScaled = TwEdG.scalar_mul(scalar)
+        assert(TwEdGScaled.is_on_curve())
+        MontGScaled = MontG.scalar_mul(scalar)
+        assert(MontGScaled.is_on_curve())
+        SwGScaled = SwG.scalar_mul(scalar)
+        assert(SwGScaled.is_on_curve())
+
+        assert(SwGScaled.to_montgomery() == MontGScaled)
+        assert(MontGScaled.to_short_weierstrass() == SwGScaled)
+        assert(TwEdGScaled.to_montgomery() == MontGScaled)
+        assert(MontGScaled.to_twisted_edwards() == TwEdGScaled)
+        assert(TwEdGScaled.to_montgomery().to_short_weierstrass() == SwGScaled)
+        assert(SwGScaled.to_montgomery().to_twisted_edwards() == TwEdGScaled)
 
 if __name__ == '__main__':
     main()

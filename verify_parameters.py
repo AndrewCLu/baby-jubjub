@@ -1,25 +1,27 @@
-from algebra import GF
-from baby_jubjub import SWPoint
+from baby_jubjub import BabyJubjubPoint, SWPoint, MontPoint, TwEdPoint
 
 # Verifies different forms of the Baby Jubjub curve are equivalent
-# Reference: https://www-fourier.univ-grenoble-alpes.fr/mphell/doc-v5/conversion_weierstrass_edwards.html
+# Curve parameters defined in: https://eips.ethereum.org/EIPS/eip-2494
+# Conversion reference: https://www-fourier.univ-grenoble-alpes.fr/mphell/doc-v5/conversion_weierstrass_edwards.html
+# Note: There is a typo in the conversion reference. The isomorphism f: (x, y) -> (u, v) from Montgomery points 
+# to Short Weierstrass points should have a v coordinate of y / B, not x / B
 def main():
     # Base field
-    p=21888242871839275222246405745257275088548364400416034343698204186575808495617
-    Fr=GF(p)
+    Fr = BabyJubjubPoint.Fr
 
     # Short Weierstrass parameters
-    SWa=Fr(7296080957279758407415468581752425029516121466805344781232734728849116493472)
-    SWb=Fr(16213513238399463127589930181672055621146936592900766180517188641980520820846)
-
-    # Twisted Edwards parameters
-    TwEdA = Fr(168700)
-    TwEdd = Fr(168696)
+    SWa = SWPoint.a
+    SWb = SWPoint.b
 
     # Montgomery parameters
-    MontA = Fr(168698)
-    MontB = Fr(1)
+    MontA = MontPoint.A
+    MontB = MontPoint.B
 
+    # Twisted Edwards parameters
+    TwEdA = TwEdPoint.A
+    TwEdd = TwEdPoint.d
+
+    # Check that the curve parameters represent the same curve
     # Convert from Montgomery to Edwards
     assert((MontA + Fr(2)) / MontB == TwEdA)
     assert((MontA - Fr(2)) / MontB == TwEdd)
@@ -38,6 +40,21 @@ def main():
     assert(Fr(3) * alpha * alpha + SWa == beta * beta)
     pt = SWPoint(alpha, 0)
     assert(pt + pt == SWPoint(None, None))
+
+    # Check that the generator and base points are the same
+    assert(SWPoint.generator().to_montgomery() == MontPoint.generator())
+    assert(SWPoint.base().to_montgomery() == MontPoint.base())
+    assert(MontPoint.generator().to_twisted_edwards() == TwEdPoint.generator())
+    assert(MontPoint.base().to_twisted_edwards() == TwEdPoint.base())
+    assert(TwEdPoint.generator().to_montgomery() == MontPoint.generator())
+    assert(TwEdPoint.base().to_montgomery() == MontPoint.base())
+    assert(MontPoint.generator().to_short_weierstrass() == SWPoint.generator())
+    assert(MontPoint.base().to_short_weierstrass() == SWPoint.base())
+
+    # Base point is Generator point scaled by 8
+    assert(SWPoint.generator().scalar_mul(8) == SWPoint.base())
+    assert(MontPoint.generator().scalar_mul(8) == MontPoint.base())
+    assert(TwEdPoint.generator().scalar_mul(8) == TwEdPoint.base())
 
 if __name__ == '__main__':
     main()
