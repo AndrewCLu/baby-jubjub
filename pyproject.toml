@@ -8,7 +8,6 @@ packages = [{include = "elliptic_curves"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-galois = "^0.3.5"
 
 
 [build-system]

@@ -13,7 +13,7 @@ SWb = Fr(16213513238399463127589930181672055621146936592900766180517188641980520
 ec = EllipticCurve(Fr, [SWa, SWb])
 assert(ec.order() % 4 == 0)
 
-# x^3 + Swa * x + Swb must have at least one root in Fr
+# x^3 + SWa * x + SWb must have at least one root in Fr
 x = PolynomialRing(Fr, 'x').gen()
 f = x^3 + SWa * x + SWb
 roots = f.roots()

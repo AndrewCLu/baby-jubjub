@@ -6,6 +6,7 @@ from baby_jubjub import BabyJubjubPoint, SWPoint, MontPoint, TwEdPoint
 # Note: There is a typo in the conversion reference. The isomorphism f: (x, y) -> (u, v) from Montgomery points 
 # to Short Weierstrass points should have a v coordinate of y / B, not x / B
 def main():
+    print("Verifying paramters of the Baby Jubjub curve...")
     # Base field
     Fr = BabyJubjubPoint.Fr
 
@@ -55,6 +56,8 @@ def main():
     assert(SWPoint.generator().scalar_mul(8) == SWPoint.base())
     assert(MontPoint.generator().scalar_mul(8) == MontPoint.base())
     assert(TwEdPoint.generator().scalar_mul(8) == TwEdPoint.base())
+
+    print("Curve parameters verified!")
 
 if __name__ == '__main__':
     main()
