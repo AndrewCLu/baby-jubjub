@@ -8,6 +8,7 @@ packages = [{include = "elliptic_curves"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+ecdsa = "^0.18.0"
 
 
 [build-system]

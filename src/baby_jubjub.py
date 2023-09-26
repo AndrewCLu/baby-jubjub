@@ -1,10 +1,13 @@
 from algebra import GF
+from ecdsa.numbertheory import SquareRootError
 
 class BabyJubjubPoint:
     # Base field
     p = 21888242871839275222246405745257275088548364400416034343698204186575808495617
-    order = 21888242871839275222246405745257275088614511777268538073601725287587578984328
     Fr = GF(p)
+    order = 21888242871839275222246405745257275088614511777268538073601725287587578984328
+    cofactor = 8
+    prime_subgroup_order = order // cofactor
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -103,6 +106,25 @@ class SWPoint(BabyJubjubPoint):
     
     def base():
         return SWPoint(SWPoint.Bx, SWPoint.By)
+    
+    def recover_from_x(x_int):
+        if not isinstance(x_int, int):
+            raise TypeError("x must be an integer.")
+        if x_int < 0 or x_int >= SWPoint.p:
+            raise ValueError("x must be in the field.")
+        
+        possible_points = []
+        # r is modded by the order of the subgroup, so we must try all possible values of r
+        for m in range(SWPoint.cofactor):
+            x = SWPoint.Fr(x_int) + SWPoint.Fr(m) * SWPoint.Fr(SWPoint.prime_subgroup_order)
+            y2 = x * x * x + SWPoint.a * x + SWPoint.b
+            try:
+                y = y2.sqrt()
+                possible_points += [SWPoint(x, y), SWPoint(x, -y)]
+            except SquareRootError:
+                pass
+        
+        return possible_points
 
     def is_on_curve(self):
         if self.is_infinity():
@@ -205,6 +227,25 @@ class MontPoint(BabyJubjubPoint):
         rhs = self.x * self.x * self.x + self.A * self.x * self.x + self.x
 
         return lhs == rhs
+        
+    def recover_from_x(x_int):
+        if not isinstance(x_int, int):
+            raise TypeError("x must be an integer.")
+        if x_int < 0 or x_int >= MontPoint.p:
+            raise ValueError("x must be in the field.")
+        
+        possible_points = []
+        # r is modded by the order of the subgroup, so we must try all possible values of r
+        for m in range(MontPoint.cofactor):
+            x = MontPoint.Fr(x_int) + MontPoint.Fr(m) * MontPoint.Fr(MontPoint.prime_subgroup_order)
+            y2 = (x * x * x + MontPoint.A * x * x + x) / MontPoint.B
+            try:
+                y = y2.sqrt()
+                possible_points += [MontPoint(x, y), MontPoint(x, -y)]
+            except SquareRootError:
+                pass
+            
+        return possible_points
     
     def to_short_weierstrass(self):
         if self.is_infinity():
@@ -281,6 +322,25 @@ class TwEdPoint(BabyJubjubPoint):
         rhs = self.Fr(1) + self.d * self.x * self.x * self.y * self.y
 
         return lhs == rhs
+    
+    def recover_from_x(x_int):
+        if not isinstance(x_int, int):
+            raise TypeError("x must be an integer.")
+        if x_int < 0 or x_int >= TwEdPoint.p:
+            raise ValueError("x must be in the field.")
+        
+        possible_points = []
+        # r is modded by the order of the subgroup, so we must try all possible values of r
+        for m in range(MontPoint.cofactor):
+            x = TwEdPoint.Fr(x_int) + TwEdPoint.Fr(m) * TwEdPoint.Fr(TwEdPoint.prime_subgroup_order)
+            y2 = (TwEdPoint.A * x * x - TwEdPoint.Fr(1)) / (TwEdPoint.d * x * x - TwEdPoint.Fr(1))
+            try:
+                y = y2.sqrt()
+                possible_points += [TwEdPoint(x, y), TwEdPoint(x, -y)]
+            except SquareRootError:
+                pass
+            
+        return possible_points
     
     def to_montgomery(self):
         if self.is_infinity():

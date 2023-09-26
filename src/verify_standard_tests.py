@@ -1,7 +1,8 @@
 from baby_jubjub import TwEdPoint
 
+# Verify the tests from the Baby Jubjub standard: https://eips.ethereum.org/EIPS/eip-2494
 def main():
-    # Verify the tests from the Baby Jubjub standard: https://eips.ethereum.org/EIPS/eip-2494
+    print("Verifying standard tests for the Baby Jubjub curve...")
     # Test 1: Addition
     x1 = 17777552123799933955779906779655732241715742912184938656739573121738514868268
     y1 = 2626589144620713026669568689430873010625803728049924121243784502389097019475
@@ -46,6 +47,8 @@ def main():
     # Test 6: Base point order
     l = 2736030358979909402780800718157159386076813972158567259200215660948447373041
     assert(TwEdPoint.base().scalar_mul(l).is_infinity())
+
+    print("Standard tests verified!")
 
 if __name__ == '__main__':
     main()
