@@ -104,7 +104,7 @@ def recover_public_key(representation, digest, r, s):
         u_2 = Fn(s) / Fn(r)
 
         pub_key = representation.base().scalar_mul(u_1.value) + pt.scalar_mul(u_2.value)
-        if (verify(digest, pub_key, r, s, representation)):
+        if (verify(representation, digest, pub_key, r, s)):
             possible_pub_keys.append(pub_key)
 
     return possible_pub_keys
