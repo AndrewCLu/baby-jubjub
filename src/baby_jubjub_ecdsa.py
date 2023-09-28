@@ -11,6 +11,7 @@ Fn = GF(order)
 
 def keygen(representation, seed):
     assert(representation in [SWPoint, MontPoint, TwEdPoint])
+    assert(isinstance(seed, int))
 
     # Generate a private key
     if seed <= 0 or seed >= order:
@@ -22,14 +23,16 @@ def keygen(representation, seed):
     
     return (priv, pub)
 
-def sign(digest, privKey, representation):
+def sign(representation, digest, privKey, random_k):
     assert(representation in [SWPoint, MontPoint, TwEdPoint])
     assert(isinstance(digest, int))
     assert(isinstance(privKey, int))
-    assert(privKey >= 0 and privKey < order)
+    assert(isinstance(random_k, int))
+    assert(privKey > 0 and privKey < order)
+    assert(random_k > 0 and random_k < order)
 
     # Generate a random nonce
-    k = 10
+    k = random_k
     
     # Generate the random point
     R = representation.base().scalar_mul(k)
@@ -45,7 +48,7 @@ def sign(digest, privKey, representation):
     return (r.value, s.value)
 
 # Standard ECDSA verification algorithm
-def verify(digest, pubKey, r, s, representation):
+def verify(representation, digest, pubKey, r, s):
     assert(representation in [SWPoint, MontPoint, TwEdPoint])
     assert(isinstance(digest, int))
     assert(isinstance(pubKey, representation))
@@ -69,7 +72,7 @@ def verify(digest, pubKey, r, s, representation):
 # This allows us to verify a signature in a different representation than the one it was signed in
 # R can be recovered from r in the original coordinate system, and then transformed to the new coordinate system
 # The verification equation is taken from Efficient ECDSA: https://personaelabs.org/posts/efficient-ecdsa-1/
-def verify_with_advice(digest, pubKey, r, s, R, representation):
+def verify_with_advice(representation, digest, pubKey, r, s, R):
     assert(representation in [SWPoint, MontPoint, TwEdPoint])
     assert(isinstance(digest, int))
     assert(isinstance(pubKey, representation))
@@ -85,7 +88,12 @@ def verify_with_advice(digest, pubKey, r, s, R, representation):
     rQa = pubKey.scalar_mul(r)
     return sR == mG + rQa
 
-def recover_public_key(digest, r, s, representation):
+def recover_public_key(representation, digest, r, s):
+    assert(representation in [SWPoint, MontPoint, TwEdPoint])
+    assert(isinstance(digest, int))
+    assert(isinstance(r, int))
+    assert(isinstance(s, int))
+
     if r <= 0 or r >= order or s <= 0 or s >= order:
         return False
     
